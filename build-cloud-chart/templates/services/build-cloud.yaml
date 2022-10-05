@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "build-cloud-chart.name" . }}
+spec:
+  clusterIP: None
+  ports:
+    - port: {{ .Values.app.controllerPort}}
+      name: {{ .Values.app.controllerName}}
+    - port: {{ .Values.app.registryPort}}
+      name: {{ .Values.app.registryName}}
+  selector:
+    app: {{ include "build-cloud-chart.name" . }}

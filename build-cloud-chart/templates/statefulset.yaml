@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: {{ include "build-cloud-chart.name" . }}
+  name: {{ include "build-cloud-chart.name" . }}
+spec:
+  replicas: {{ .Values.app.replicaCount}}
+  selector:
+    matchLabels:
+      app: {{ include "build-cloud-chart.name" . }}
+  serviceName: {{ include "build-cloud-chart.name" . }}
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app: {{ include "build-cloud-chart.name" . }}
+      name: {{ include "build-cloud-chart.name" . }}
+    spec:
+      containers:
+        - name: {{ .Values.app.controllerName}}
+          env:
+            - name: ANKA_STANDLONE
+              value: "false"
+            - name: ANKA_LISTEN_ADDR
+              value: {{ .Values.app.ankaListenAddress}}
+            - name: ANKA_ANKA_REGISTRY
+              value: {{ .Values.app.registryAddress}}
+            - name: ANKA_LOCAL_ANKA_REGISTRY
+              value: {{ .Values.app.localRegistryAddress}}
+            - name: ANKA_ETCD_ENDPOINTS
+              value: {{ .Values.app.etcdEndpoints}}
+          image: "{{ .Values.controllerImage.repository }}:{{ .Values.controllerImage.tag }}"
+          imagePullPolicy: {{ .Values.controllerImage.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.app.controllerPort}}
+              name: {{ .Values.app.controllerName}}
+              protocol: TCP
+          command: ["/bin/bash", "-c", "anka-controller"]
+        - name: {{ .Values.app.registryName}}
+          image: "{{ .Values.registryImage.repository }}:{{ .Values.registryImage.tag }}"
+          imagePullPolicy: {{ .Values.registryImage.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.app.registryPort}}
+              name: {{ .Values.app.registryName}}
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /mnt/vol
+              name: {{ .Values.persistentVolume.name}}
+      restartPolicy: Always
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ .Values.persistentVolume.name}}
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Gi
+        storageClassName: {{ .Values.app.storageClassName}}
+        volumeMode: Filesystem

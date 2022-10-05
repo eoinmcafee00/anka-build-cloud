@@ -1,0 +1,45 @@
+# Default values for build-cloud-chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+nameOverride: ""
+fullnameOverride: ""
+
+controllerImage:
+  repository: veertu/anka-build-cloud-controller
+  tag: latest
+  pullPolicy: IfNotPresent
+
+registryImage:
+  repository: veertu/anka-build-cloud-registry
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceController:
+  name: build-cloud-controller
+  port: 8090
+  targetPort: 80
+
+serviceRegistry:
+    name: build-cloud-registry
+    port: 8089
+    targetPort: 8089
+
+app:
+  replicaCount: 2
+  controllerName: controller
+  controllerPort: 80
+  ankaListenAddress: ":80"
+  registryAddress: "http://anka.registry:8089"
+  localRegistryAddress: "http://localhost:8089"
+  etcdEndpoints: "http://etcd-headless:2379"
+  registryName: registry
+  registryPort: 8089
+  storageClassName: local-storage
+
+persistentVolume:
+  name: build-cloud-data
+  storage: 100Gi
+  hostPath: "/home/data/build-cloud"
+  hostPathType: DirectoryOrCreate
+  storageClass: local-storage
+  accessMode: ReadWriteOnce
